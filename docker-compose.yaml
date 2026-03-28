@@ -1,0 +1,24 @@
+services:
+  api:
+    build: ./backend
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+  db:
+    image: mariadb:10.11.3
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=template
+    ports:
+      - 3306:3306
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+  adminer:
+    image: adminer
+    links:
+      - db
+    ports:
+      - 4000:8080
