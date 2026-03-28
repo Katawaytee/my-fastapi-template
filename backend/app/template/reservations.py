@@ -1,9 +1,9 @@
 import logging
 
 from app.core.response import ResponseException, ResponseModel, ReturnStatus
-from app.template.model.reservation import ReservationManager
+from app.template.model.reservation import ReservationIn, ReservationManager
 from fastapi import APIRouter, status
-from sqlalchemy import select
+from sqlalchemy import insert, select
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 router = APIRouter()
@@ -34,6 +34,20 @@ class ReservationResource:
 
         return result
 
+    def add_reservation(self, reservation_in: ReservationIn):
+        """
+        add_reservation
+        """
+
+        value = reservation_in.dict(exclude_none=True)
+
+        stmt = insert(self.reservation_man.table)
+
+        with self.reservation_man.db_engine.begin() as conn:
+            result = conn.execute(stmt, value)
+
+        return result.rowcount
+
 
 reservation_resource = ReservationResource()
 
@@ -52,12 +66,34 @@ async def reservation_list():
             " [reservation_list] Failed to get reservations from the Database."
         )
         raise ResponseException(
-            code=status.HTTP_403_FORBIDDEN,
-            info="Not allow to add new user!!",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            info="Failed to get reservations from the Database.",
         )
 
     return ResponseModel(
         status=ReturnStatus.SUCCESS.value,
         content=reservations,
         info=f"{len(reservations)} record(s) retrieved",
+    )
+
+
+@router.post("/")
+async def reservation_add(reservation_in: ReservationIn):
+    """
+    reservation_add
+    """
+
+    try:
+        insert_count = reservation_resource.add_reservation(reservation_in)
+
+    except (SQLAlchemyError, DBAPIError):
+        logger.error(" [reservation_add] Failed to insert reservation to the Database.")
+        raise ResponseException(
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            info="Failed to insert reservation to the Database.",
+        )
+
+    return ResponseModel(
+        status=ReturnStatus.SUCCESS.value,
+        info=f"{insert_count} record(s) retrieved",
     )
