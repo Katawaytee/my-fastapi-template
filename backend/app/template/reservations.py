@@ -11,3 +11,8 @@ logger = logging.getLogger(__name__)
 class ReservationResource:
     def __init__(self):
         self.reservation_man = ReservationManager()
+
+
+@router.get("/")
+async def reservation_get():
+    return {"from": "reservation_get"}
