@@ -3,7 +3,7 @@ import logging
 from app.core.response import ResponseException, ResponseModel, ReturnStatus
 from app.template.model.reservation import ReservationIn, ReservationManager
 from fastapi import APIRouter, status
-from sqlalchemy import insert, select, update
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 router = APIRouter()
@@ -63,6 +63,20 @@ class ReservationResource:
             update(self.reservation_man.table)
             .where(self.reservation_man.table.c.reservation_id == reservation_id)
             .values(value)
+        )
+
+        with self.reservation_man.db_engine.begin() as conn:
+            result = conn.execute(stmt)
+
+        return result.rowcount
+
+    def delete_single_reservation(self, reservation_id: int):
+        """
+        delete_single_reservation
+        """
+
+        stmt = delete(self.reservation_man.table).where(
+            self.reservation_man.table.c.reservation_id == reservation_id
         )
 
         with self.reservation_man.db_engine.begin() as conn:
@@ -148,4 +162,28 @@ async def reservation_update(reservation_id: int, reservation_in: ReservationIn)
     return ResponseModel(
         status=ReturnStatus.SUCCESS.value,
         info=f"{update_count} record(s) updated",
+    )
+
+
+@router.delete("/{reservation_id}")
+async def reservation_delete(reservation_id: int):
+    """
+    reservation_delete
+    """
+
+    try:
+        delete_count = reservation_resource.delete_single_reservation(reservation_id)
+
+    except (SQLAlchemyError, DBAPIError) as e:
+        logger.error(
+            f" [reservation_delete] Failed to insert reservation to the Database. | {e}"
+        )
+        raise ResponseException(
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            info="Failed to delete reservation from the Database.",
+        )
+
+    return ResponseModel(
+        status=ReturnStatus.SUCCESS.value,
+        info=f"{delete_count} record(s) deleted",
     )
