@@ -8,7 +8,7 @@ ROOT_PATH = config.ROOT_PATH
 
 app = FastAPI(title="my-fastapi-template")
 
-app.include_router(template.router, prefix=ROOT_PATH + "/template")
+app.include_router(template.router, prefix=ROOT_PATH)
 
 
 @app.get(ROOT_PATH)
