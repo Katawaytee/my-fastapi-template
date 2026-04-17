@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 
 from app.core.response import ResponseException, ResponseModel, ReturnStatus
+from app.template.helpers.sqlalchemy import build_sort_expression
 from app.template.model.reservation import ReservationIn, ReservationManager
 from fastapi import APIRouter, status
 from sqlalchemy import delete, insert, select, update
@@ -17,7 +18,9 @@ class ReservationResource:
     def __init__(self):
         self.reservation_man = ReservationManager()
 
-    def get_all_reservation(self, search_query: Optional[str] = None):
+    def get_all_reservation(
+        self, search_query: Optional[str] = None, order_by: Optional[str] = None
+    ):
         """
         get_all_reservation
         """
@@ -30,10 +33,29 @@ class ReservationResource:
             self.reservation_man.table.c.party_size,
         )
 
+        # Search
         if search_query:
             stmt = stmt.where(
                 self.reservation_man.table.c.customer_name.contains(search_query)
             )
+
+        # Sorting
+        if order_by:
+            valid_sort_columns = {
+                "reservation_id": self.reservation_man.table.c.reservation_id,
+                "customer_name": self.reservation_man.table.c.customer_name,
+                "table_id": self.reservation_man.table.c.table_id,
+                "reservation_time": self.reservation_man.table.c.reservation_time,
+                "party_size": self.reservation_man.table.c.party_size,
+            }
+
+            sort_expression = build_sort_expression(
+                order_by=order_by,
+                valid_columns=valid_sort_columns,
+                default_field="reservation_id",
+            )
+
+            stmt = stmt.order_by(sort_expression)
 
         with self.reservation_man.db_engine.connect() as conn:
             result = conn.execute(stmt).fetchall()
@@ -95,7 +117,9 @@ reservation_resource = ReservationResource()
 
 
 @router.get("/")
-async def reservation_list(search_query: Optional[str] = None):
+async def reservation_list(
+    search_query: Optional[str] = None, order_by: Optional[str] = None
+):
     """
     reservation_list
     """
@@ -103,6 +127,7 @@ async def reservation_list(search_query: Optional[str] = None):
     try:
         reservations = reservation_resource.get_all_reservation(
             search_query=search_query,
+            order_by=order_by,
         )
 
     except (SQLAlchemyError, DBAPIError) as e:
