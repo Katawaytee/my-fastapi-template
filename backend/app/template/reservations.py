@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from app.core.response import ResponseException, ResponseModel, ReturnStatus
 from app.template.model.reservation import ReservationIn, ReservationManager
@@ -16,7 +17,7 @@ class ReservationResource:
     def __init__(self):
         self.reservation_man = ReservationManager()
 
-    def get_all_reservation(self):
+    def get_all_reservation(self, search_query: Optional[str] = None):
         """
         get_all_reservation
         """
@@ -28,6 +29,11 @@ class ReservationResource:
             self.reservation_man.table.c.reservation_time,
             self.reservation_man.table.c.party_size,
         )
+
+        if search_query:
+            stmt = stmt.where(
+                self.reservation_man.table.c.customer_name.contains(search_query)
+            )
 
         with self.reservation_man.db_engine.connect() as conn:
             result = conn.execute(stmt).fetchall()
@@ -89,13 +95,15 @@ reservation_resource = ReservationResource()
 
 
 @router.get("/")
-async def reservation_list():
+async def reservation_list(search_query: Optional[str] = None):
     """
     reservation_list
     """
 
     try:
-        reservations = reservation_resource.get_all_reservation()
+        reservations = reservation_resource.get_all_reservation(
+            search_query=search_query,
+        )
 
     except (SQLAlchemyError, DBAPIError) as e:
         logger.error(
