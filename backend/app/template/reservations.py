@@ -10,7 +10,7 @@ from app.core.response import (
 from app.template.helpers.sqlalchemy import build_sort_expression
 from app.template.model.reservation import ReservationIn, ReservationManager
 from fastapi import APIRouter, status
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 router = APIRouter()
@@ -34,6 +34,8 @@ class ReservationResource:
         get_all_reservation
         """
 
+        count_stmt = select(func.count()).select_from(self.reservation_man.table)
+
         stmt = select(
             self.reservation_man.table.c.reservation_id,
             self.reservation_man.table.c.customer_name,
@@ -44,9 +46,12 @@ class ReservationResource:
 
         # Search
         if search_query:
-            stmt = stmt.where(
-                self.reservation_man.table.c.customer_name.contains(search_query)
+            search_exp = self.reservation_man.table.c.customer_name.contains(
+                search_query
             )
+
+            count_stmt = count_stmt.where(search_exp)
+            stmt = stmt.where(search_exp)
 
         # Sorting
         if order_by:
@@ -71,9 +76,10 @@ class ReservationResource:
             stmt = stmt.limit(page_size).offset(page * page_size)
 
         with self.reservation_man.db_engine.connect() as conn:
+            total_count = conn.execute(count_stmt).scalar() or 0
             result = conn.execute(stmt).fetchall()
 
-        return result
+        return total_count, result
 
     def add_reservation(self, reservation_in: ReservationIn):
         """
@@ -141,7 +147,7 @@ async def reservation_list(
     """
 
     try:
-        reservations = reservation_resource.get_all_reservation(
+        count, reservations = reservation_resource.get_all_reservation(
             search_query=search_query,
             order_by=order_by,
             page=page,
@@ -159,6 +165,7 @@ async def reservation_list(
 
     return SearchResponseModel(
         status=ReturnStatus.SUCCESS.value,
+        count=count,
         data=reservations,
         page=page,
         page_size=page_size,
