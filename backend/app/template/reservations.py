@@ -1,7 +1,12 @@
 import logging
 from typing import Optional
 
-from app.core.response import ResponseException, ResponseModel, ReturnStatus
+from app.core.response import (
+    ResponseException,
+    ResponseModel,
+    ReturnStatus,
+    SearchResponseModel,
+)
 from app.template.helpers.sqlalchemy import build_sort_expression
 from app.template.model.reservation import ReservationIn, ReservationManager
 from fastapi import APIRouter, status
@@ -19,7 +24,11 @@ class ReservationResource:
         self.reservation_man = ReservationManager()
 
     def get_all_reservation(
-        self, search_query: Optional[str] = None, order_by: Optional[str] = None
+        self,
+        search_query: Optional[str] = None,
+        order_by: Optional[str] = None,
+        page: int = 0,
+        page_size: Optional[int] = None,
     ):
         """
         get_all_reservation
@@ -56,6 +65,10 @@ class ReservationResource:
             )
 
             stmt = stmt.order_by(sort_expression)
+
+        # Pagination
+        if page_size:
+            stmt = stmt.limit(page_size).offset(page * page_size)
 
         with self.reservation_man.db_engine.connect() as conn:
             result = conn.execute(stmt).fetchall()
@@ -118,7 +131,10 @@ reservation_resource = ReservationResource()
 
 @router.get("/")
 async def reservation_list(
-    search_query: Optional[str] = None, order_by: Optional[str] = None
+    search_query: Optional[str] = None,
+    order_by: Optional[str] = None,
+    page: int = 0,
+    page_size: Optional[int] = None,
 ):
     """
     reservation_list
@@ -128,6 +144,8 @@ async def reservation_list(
         reservations = reservation_resource.get_all_reservation(
             search_query=search_query,
             order_by=order_by,
+            page=page,
+            page_size=page_size,
         )
 
     except (SQLAlchemyError, DBAPIError) as e:
@@ -139,10 +157,11 @@ async def reservation_list(
             info="Failed to get reservations from the Database.",
         )
 
-    return ResponseModel(
+    return SearchResponseModel(
         status=ReturnStatus.SUCCESS.value,
-        content=reservations,
-        info=f"{len(reservations)} record(s) retrieved",
+        data=reservations,
+        page=page,
+        page_size=page_size,
     )
 
 
