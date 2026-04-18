@@ -9,12 +9,14 @@ from app.core.response import (
 )
 from app.template.helpers.sqlalchemy import build_sort_expression
 from app.template.model.reservation import (
+    ReservationBulkAddIn,
+    ReservationBulkUpdateIn,
     ReservationIn,
     ReservationManager,
-    ReservationBulkAddIn,
+    ReservationUpdateIn,
 )
 from fastapi import APIRouter, status
-from sqlalchemy import delete, func, insert, select, update
+from sqlalchemy import bindparam, delete, func, insert, select, update
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 router = APIRouter()
@@ -140,12 +142,39 @@ class ReservationResource:
         add_multiple_reservations
         """
 
+        # Convert to bulk insertable form
         reservation_list = [obj.dict() for obj in reservations]
 
         stmt = insert(self.reservation_man.table)
 
         with self.reservation_man.db_engine.begin() as conn:
             result = conn.execute(stmt, reservation_list)
+
+        return result.rowcount
+
+    def update_multiple_reservations(self, reservations: list[ReservationUpdateIn]):
+        """
+        update_multiple_reservations
+        """
+
+        # Convert to bulk updatable form
+        reservation_list = []
+        for obj in reservations:
+            data = obj.dict()
+            data["b_reservation_id"] = data.pop("reservation_id")
+            reservation_list.append(data)
+
+        stmt = update(self.reservation_man.table).where(
+            self.reservation_man.table.c.reservation_id == bindparam("b_reservation_id")
+        )
+
+        with self.reservation_man.db_engine.begin() as conn:
+            result = conn.execute(stmt, reservation_list)
+
+            # Rollback all the updates
+            # if some of provided id does not exist
+            if result.rowcount != len(reservation_list):
+                raise ValueError("Some of the target reservation do not exist.")
 
         return result.rowcount
 
@@ -238,6 +267,32 @@ async def reservation_bulk_add(bulk_add_in: ReservationBulkAddIn):
     return ResponseModel(
         status=ReturnStatus.SUCCESS.value,
         info=f"{insert_count} record(s) retrieved",
+    )
+
+
+@router.put("/bulk")
+async def reservation_bulk_update(bulk_update_in: ReservationBulkUpdateIn):
+    """
+    reservation_update_add
+    """
+
+    try:
+        update_count = reservation_resource.update_multiple_reservations(
+            reservations=bulk_update_in.reservations,
+        )
+
+    except (SQLAlchemyError, DBAPIError, ValueError) as e:
+        logger.error(
+            f" [reservation_bulk_update] Failed to  bulk update reservation to the Database. | {e}"
+        )
+        raise ResponseException(
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            info="Failed to bulk update reservation to the Database.",
+        )
+
+    return ResponseModel(
+        status=ReturnStatus.SUCCESS.value,
+        info=f"{update_count} record(s) retrieved",
     )
 
 

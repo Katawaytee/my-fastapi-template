@@ -22,6 +22,18 @@ class ReservationBulkAddIn(BaseModel):
     reservations: list[ReservationIn]
 
 
+class ReservationUpdateIn(BaseModel):
+    reservation_id: int
+    customer_name: Optional[str]
+    table_id: Optional[int]
+    reservation_time: Optional[datetime]
+    party_size: Optional[int]
+
+
+class ReservationBulkUpdateIn(BaseModel):
+    reservations: list[ReservationUpdateIn]
+
+
 class ReservationManager(DBManager):
     def __init__(self):
         super().__init__("reservation", None)
