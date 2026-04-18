@@ -8,7 +8,11 @@ from app.core.response import (
     SearchResponseModel,
 )
 from app.template.helpers.sqlalchemy import build_sort_expression
-from app.template.model.reservation import ReservationIn, ReservationManager
+from app.template.model.reservation import (
+    ReservationIn,
+    ReservationManager,
+    ReservationBulkAddIn,
+)
 from fastapi import APIRouter, status
 from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
@@ -131,6 +135,20 @@ class ReservationResource:
 
         return result.rowcount
 
+    def add_multiple_reservations(self, reservations: list[ReservationIn]):
+        """
+        add_multiple_reservations
+        """
+
+        reservation_list = [obj.dict() for obj in reservations]
+
+        stmt = insert(self.reservation_man.table)
+
+        with self.reservation_man.db_engine.begin() as conn:
+            result = conn.execute(stmt, reservation_list)
+
+        return result.rowcount
+
 
 reservation_resource = ReservationResource()
 
@@ -194,6 +212,32 @@ async def reservation_add(reservation_in: ReservationIn):
         status=ReturnStatus.SUCCESS.value,
         content=result,
         info="1 record(s) retrieved",
+    )
+
+
+@router.post("/bulk")
+async def reservation_bulk_add(bulk_add_in: ReservationBulkAddIn):
+    """
+    reservation_bulk_add
+    """
+
+    try:
+        insert_count = reservation_resource.add_multiple_reservations(
+            reservations=bulk_add_in.reservations,
+        )
+
+    except (SQLAlchemyError, DBAPIError) as e:
+        logger.error(
+            f" [reservation_bulk_add] Failed to  bulk insert reservation to the Database. | {e}"
+        )
+        raise ResponseException(
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            info="Failed to bulk insert reservation to the Database.",
+        )
+
+    return ResponseModel(
+        status=ReturnStatus.SUCCESS.value,
+        info=f"{insert_count} record(s) retrieved",
     )
 
 

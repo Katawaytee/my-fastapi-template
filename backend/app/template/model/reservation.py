@@ -18,6 +18,10 @@ class Reservation(ReservationIn):
     update_time: datetime
 
 
+class ReservationBulkAddIn(BaseModel):
+    reservations: list[ReservationIn]
+
+
 class ReservationManager(DBManager):
     def __init__(self):
         super().__init__("reservation", None)
