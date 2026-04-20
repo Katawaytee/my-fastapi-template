@@ -34,6 +34,10 @@ class ReservationBulkUpdateIn(BaseModel):
     reservations: list[ReservationUpdateIn]
 
 
+class ReservationBulkDeleteIn(BaseModel):
+    reservation_ids: list[int]
+
+
 class ReservationManager(DBManager):
     def __init__(self):
         super().__init__("reservation", None)

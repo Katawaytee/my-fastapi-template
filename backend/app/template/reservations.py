@@ -10,6 +10,7 @@ from app.core.response import (
 from app.template.helpers.sqlalchemy import build_sort_expression
 from app.template.model.reservation import (
     ReservationBulkAddIn,
+    ReservationBulkDeleteIn,
     ReservationBulkUpdateIn,
     ReservationIn,
     ReservationManager,
@@ -263,6 +264,20 @@ class ReservationResource:
 
         return result.rowcount
 
+    def delete_multiple_reservations(self, reservation_ids: list[int]):
+        """
+        delete_multiple_reservations
+        """
+
+        stmt = delete(self.reservation_man.table).where(
+            self.reservation_man.table.c.reservation_id.in_(reservation_ids)
+        )
+
+        with self.reservation_man.db_engine.begin() as conn:
+            result = conn.execute(stmt)
+
+        return result.rowcount
+
 
 reservation_resource = ReservationResource()
 
@@ -405,6 +420,32 @@ async def reservation_update(reservation_id: int, reservation_in: ReservationIn)
     return ResponseModel(
         status=ReturnStatus.SUCCESS.value,
         info=f"{update_count} record(s) updated",
+    )
+
+
+@router.delete("/bulk")
+async def reservation_bulk_delete(bulk_delete_in: ReservationBulkDeleteIn):
+    """
+    reservation_bulk_delete
+    """
+
+    try:
+        delete_count = reservation_resource.delete_multiple_reservations(
+            reservation_ids=bulk_delete_in.reservation_ids,
+        )
+
+    except (SQLAlchemyError, DBAPIError) as e:
+        logger.error(
+            f" [reservation_bulk_delete] Failed to bulk delete reservation to the Database. | {e}"
+        )
+        raise ResponseException(
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            info="Failed to bulk delete reservation to the Database.",
+        )
+
+    return ResponseModel(
+        status=ReturnStatus.SUCCESS.value,
+        info=f"{delete_count} record(s) deleted",
     )
 
 
