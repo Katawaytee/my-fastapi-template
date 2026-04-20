@@ -391,7 +391,19 @@ async def reservation_add(reservation_in: ReservationIn):
 @router.post("/bulk")
 async def reservation_bulk_add(bulk_add_in: ReservationBulkAddIn):
     """
-    reservation_bulk_add
+    Add multiple reservation records.
+
+    Request Body
+    ------------
+    - `reservations` (list[ReservationIn])
+        - `customer_name` (str)
+        - `table_id` (int)
+        - `reservation_time` (datetime)
+        - `party_size` (int)
+
+    Returns
+    -------
+    **ResponseModel**
     """
 
     try:
