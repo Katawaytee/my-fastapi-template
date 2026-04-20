@@ -142,7 +142,21 @@ class ReservationResource:
         self, reservation_id: int, reservation_in: ReservationIn
     ):
         """
-        update_single_reservation
+        Update a reservation record to the database.
+
+        Parameters
+        ----------
+        - `reservation_id` (int)
+        - `reservation_in` (ReservationIn)
+            - `customer_name` (str)
+            - `table_id` (int)
+            - `reservation_time` (datetime)
+            - `party_size` (int)
+
+        Returns
+        -------
+        **int**
+            The number of updated record.
         """
 
         value = reservation_in.dict(exclude_none=True)
