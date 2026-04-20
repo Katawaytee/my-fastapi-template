@@ -507,7 +507,15 @@ async def reservation_update(reservation_id: int, reservation_in: ReservationIn)
 @router.delete("/bulk")
 async def reservation_bulk_delete(bulk_delete_in: ReservationBulkDeleteIn):
     """
-    reservation_bulk_delete
+    Delete multiple reservation records.
+
+    Request Body
+    ------------
+    - `reservation_ids` (list[int])
+
+    Returns
+    -------
+    **ResponseModel**
     """
 
     try:
