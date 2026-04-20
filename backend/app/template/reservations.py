@@ -111,7 +111,20 @@ class ReservationResource:
 
     def add_reservation(self, reservation_in: ReservationIn):
         """
-        add_reservation
+        Add a reservation record to the database.
+
+        Parameters
+        ----------
+        - `reservation_in` (ReservationIn)
+            - `customer_name` (str)
+            - `table_id` (int)
+            - `reservation_time` (datetime)
+            - `party_size` (int)
+
+        Returns
+        -------
+        **dict**
+            The inserted record.
         """
 
         value = reservation_in.dict(exclude_none=True)
