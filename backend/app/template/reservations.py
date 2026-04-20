@@ -174,7 +174,16 @@ class ReservationResource:
 
     def delete_single_reservation(self, reservation_id: int):
         """
-        delete_single_reservation
+        Delete a reservation record from the database.
+
+        Parameters
+        ----------
+        - `reservation_id` (int)
+
+        Returns
+        -------
+        **int**
+            The number of deleted record.
         """
 
         stmt = delete(self.reservation_man.table).where(
