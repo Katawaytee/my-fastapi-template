@@ -266,7 +266,16 @@ class ReservationResource:
 
     def delete_multiple_reservations(self, reservation_ids: list[int]):
         """
-        delete_multiple_reservations
+        Delete multiple reservation records from the database.
+
+        Parameters
+        ----------
+        - `reservation_ids` (list[int])
+
+        Returns
+        -------
+        **int**
+            The number of deleted record.
         """
 
         stmt = delete(self.reservation_man.table).where(
