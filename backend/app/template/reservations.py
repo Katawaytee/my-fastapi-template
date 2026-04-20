@@ -225,7 +225,21 @@ class ReservationResource:
 
     def update_multiple_reservations(self, reservations: list[ReservationUpdateIn]):
         """
-        update_multiple_reservations
+        Add multiple reservation records to the database.
+
+        Parameters
+        ----------
+        - `reservations` (list[ReservationUpdateIn])
+            - `reservation_id` (int)
+            - `customer_name` (str)
+            - `table_id` (int)
+            - `reservation_time` (datetime)
+            - `party_size` (int)
+
+        Returns
+        -------
+        **int**
+            The number of updated record.
         """
 
         # Convert to bulk updatable form
