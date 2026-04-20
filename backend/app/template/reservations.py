@@ -37,7 +37,29 @@ class ReservationResource:
         page_size: Optional[int] = None,
     ):
         """
-        get_all_reservation
+        Return a list of reservations.
+
+        Parameters
+        ----------
+        - `search_query` (str)
+            A search keyword to search by the customer name.
+        - `order_by` (str)
+            The field and direction to sort the results (e.g., "customer_name asc").
+        - `page` (int)
+            The current page number for pagination.
+        - `page_size` (int)
+            The number of reservations to display per page.
+
+        Returns
+        -------
+        **tuple**
+        - `reservation_count` (int)
+        - `result` (list[object])
+            - `reservation_id` (int)
+            - `customer_name` (str)
+            - `table_id` (int)
+            - `reservation_time` (datetime)
+            - `party_size` (int)
         """
 
         count_stmt = select(func.count()).select_from(self.reservation_man.table)
