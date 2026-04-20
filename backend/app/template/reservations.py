@@ -384,7 +384,7 @@ async def reservation_add(reservation_in: ReservationIn):
     return ResponseModel(
         status=ReturnStatus.SUCCESS.value,
         content=result,
-        info="1 record(s) retrieved",
+        info="1 record(s) inserted",
     )
 
 
@@ -422,7 +422,7 @@ async def reservation_bulk_add(bulk_add_in: ReservationBulkAddIn):
 
     return ResponseModel(
         status=ReturnStatus.SUCCESS.value,
-        info=f"{insert_count} record(s) retrieved",
+        info=f"{insert_count} record(s) inserted",
     )
 
 
@@ -461,7 +461,7 @@ async def reservation_bulk_update(bulk_update_in: ReservationBulkUpdateIn):
 
     return ResponseModel(
         status=ReturnStatus.SUCCESS.value,
-        info=f"{update_count} record(s) retrieved",
+        info=f"{update_count} record(s) updated",
     )
 
 
