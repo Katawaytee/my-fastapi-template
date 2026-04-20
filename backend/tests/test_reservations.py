@@ -41,3 +41,31 @@ async def test_reservation_add():
     # setup for followed test cases
     global created_reservation_id
     created_reservation_id = res.content["reservation_id"]
+
+
+# ---------- BULK ADD RESERVATION ---------- #
+MOCK_RESERVATION_BULK_ADD_IN = ReservationBulkAddIn(
+    reservations=[
+        ReservationIn(
+            customer_name="Customer Two",
+            party_size=4,
+            reservation_time="2026-11-17T16:59:00.000Z",
+            table_id=4,
+        ),
+        ReservationIn(
+            customer_name="Customer Three",
+            party_size=4,
+            reservation_time="2026-11-17T16:59:00.000Z",
+            table_id=2,
+        ),
+    ]
+)
+
+
+@pytest.mark.asyncio
+async def test_reservation_bulk_add():
+    res = await reservation_bulk_add(bulk_add_in=MOCK_RESERVATION_BULK_ADD_IN)
+
+    assert res.status == ReturnStatus.SUCCESS.value
+    assert res.info == "2 record(s) inserted"
+
