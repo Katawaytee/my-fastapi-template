@@ -429,7 +429,20 @@ async def reservation_bulk_add(bulk_add_in: ReservationBulkAddIn):
 @router.put("/bulk")
 async def reservation_bulk_update(bulk_update_in: ReservationBulkUpdateIn):
     """
-    reservation_update_add
+    Update multiple reservation records.
+
+    Request Body
+    ------------
+    - `reservations` (list[ReservationUpdateIn])
+        - `reservation_id` (int)
+        - `customer_name` (str)
+        - `table_id` (int)
+        - `reservation_time` (datetime)
+        - `party_size` (int)
+
+    Returns
+    -------
+    **ResponseModel**
     """
 
     try:
