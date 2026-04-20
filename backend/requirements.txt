@@ -5,3 +5,7 @@ pydantic==1.9.0
 
 SQLAlchemy==1.4.32
 mysqlclient==2.1.0
+
+pytest==7.4.0
+pytest-cov==5.0.0
+pytest-asyncio==0.21.1
