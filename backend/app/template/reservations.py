@@ -197,7 +197,20 @@ class ReservationResource:
 
     def add_multiple_reservations(self, reservations: list[ReservationIn]):
         """
-        add_multiple_reservations
+        Add multiple reservation records to the database.
+
+        Parameters
+        ----------
+        - `reservations` (list[ReservationIn])
+            - `customer_name` (str)
+            - `table_id` (int)
+            - `reservation_time` (datetime)
+            - `party_size` (int)
+
+        Returns
+        -------
+        **int**
+            The number of inserted record.
         """
 
         # Convert to bulk insertable form
