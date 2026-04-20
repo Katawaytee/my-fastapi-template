@@ -299,7 +299,28 @@ async def reservation_list(
     page_size: Optional[int] = None,
 ):
     """
-    reservation_list
+    Return a list of reservations.
+
+    Query Parameters
+    ----------------
+    - `search_query` (str)
+        A search keyword to search by the customer name.
+    - `order_by` (str)
+        The field and direction to sort the results (e.g., "customer_name asc").
+    - `page` (int)
+        The current page number for pagination.
+    - `page_size` (int)
+        The number of reservations to display per page.
+
+    Returns
+    -------
+    **SearchResponseModel**
+    - `data` (list[object])
+        - `reservation_id` (int)
+        - `customer_name` (str)
+        - `table_id` (int)
+        - `reservation_time` (datetime)
+        - `party_size` (int)
     """
 
     try:
