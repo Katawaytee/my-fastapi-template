@@ -352,7 +352,21 @@ async def reservation_list(
 @router.post("/")
 async def reservation_add(reservation_in: ReservationIn):
     """
-    reservation_add
+    Add a reservation record.
+
+    Request Body
+    ------------
+    - `reservation_in` (ReservationIn)
+        - `customer_name` (str)
+        - `table_id` (int)
+        - `reservation_time` (datetime)
+        - `party_size` (int)
+
+    Returns
+    -------
+    **ResponseModel**
+    - `data` (dict)
+        The inserted record.
     """
 
     try:
