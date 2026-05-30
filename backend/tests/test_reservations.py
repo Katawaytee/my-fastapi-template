@@ -151,3 +151,48 @@ async def test_reservation_list_all_params():
     assert len(res.data) == 2
 
     assert res.data[0].reservation_id > res.data[1].reservation_id
+
+
+# ---------- UPDATE RESERVATION ---------- #
+MOCK_RESERVATION_UPDATE_IN = ReservationIn(
+    customer_name="Customer One Updated",
+    party_size=6,
+    reservation_time=datetime(2026, 11, 18, 18, 0),
+    table_id=5,
+)
+
+
+@pytest.mark.asyncio
+async def test_reservation_update():
+    res = await reservation_update(
+        reservation_id=created_reservation_id,
+        reservation_in=MOCK_RESERVATION_UPDATE_IN,
+    )
+
+    assert res.status == ReturnStatus.SUCCESS.value
+    assert res.info == "1 record(s) updated"
+
+    # Verify the update by calling reservation_list
+    list_res = await reservation_list(search_query="Customer One Updated")
+    assert list_res.status == ReturnStatus.SUCCESS.value
+    assert list_res.count == 1
+    assert len(list_res.data) == 1
+
+    updated_data = list_res.data[0]
+    assert updated_data.reservation_id == created_reservation_id
+    assert updated_data.customer_name == MOCK_RESERVATION_UPDATE_IN.customer_name
+    assert updated_data.party_size == MOCK_RESERVATION_UPDATE_IN.party_size
+    assert updated_data.reservation_time == MOCK_RESERVATION_UPDATE_IN.reservation_time
+    assert updated_data.table_id == MOCK_RESERVATION_UPDATE_IN.table_id
+
+
+@pytest.mark.asyncio
+async def test_reservation_update_not_found():
+    res = await reservation_update(
+        reservation_id=99999,
+        reservation_in=MOCK_RESERVATION_UPDATE_IN,
+    )
+
+    assert res.status == ReturnStatus.SUCCESS.value
+    assert res.info == "0 record(s) updated"
+
