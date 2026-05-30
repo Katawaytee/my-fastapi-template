@@ -12,6 +12,7 @@ from app.template.reservations import (
     reservation_add,
     reservation_bulk_add,
     reservation_bulk_update,
+    reservation_delete,
     reservation_list,
     reservation_update,
 )
@@ -260,3 +261,25 @@ async def test_reservation_bulk_update_not_found():
 
     assert exc_info.value.code == 500
     assert exc_info.value.info == "Failed to bulk update reservation to the Database."
+
+
+# ---------- DELETE RESERVATION ---------- #
+@pytest.mark.asyncio
+async def test_reservation_delete():
+    res = await reservation_delete(reservation_id=created_reservation_id)
+
+    assert res.status == ReturnStatus.SUCCESS.value
+    assert res.info == "1 record(s) deleted"
+
+    # Verify it is deleted
+    list_res = await reservation_list(search_query="Customer One Updated")
+    assert list_res.status == ReturnStatus.SUCCESS.value
+    assert list_res.count == 0
+
+
+@pytest.mark.asyncio
+async def test_reservation_delete_not_found():
+    res = await reservation_delete(reservation_id=99999)
+
+    assert res.status == ReturnStatus.SUCCESS.value
+    assert res.info == "0 record(s) deleted"
