@@ -1,22 +1,43 @@
 from datetime import datetime
 
 import pytest
-from app.core.response import ReturnStatus
+from app.core.response import ResponseException, ReturnStatus
 from app.template.model.reservation import (
     ReservationBulkAddIn,
-    ReservationBulkDeleteIn,
     ReservationBulkUpdateIn,
     ReservationIn,
+    ReservationUpdateIn,
 )
 from app.template.reservations import (
     reservation_add,
     reservation_bulk_add,
-    reservation_bulk_delete,
     reservation_bulk_update,
-    reservation_delete,
     reservation_list,
     reservation_update,
 )
+
+
+@pytest.fixture
+def mock_reservation_bulk_update_in():
+    return ReservationBulkUpdateIn(
+        reservations=[
+            ReservationUpdateIn(
+                reservation_id=bulk_created_reservation_id[0],
+                customer_name="Customer Two Updated",
+                party_size=8,
+                reservation_time=datetime(2026, 11, 19, 19, 0),
+                table_id=6,
+            ),
+            ReservationUpdateIn(
+                reservation_id=bulk_created_reservation_id[1],
+                customer_name="Customer Three Updated",
+                party_size=10,
+                reservation_time=datetime(2026, 11, 20, 20, 0),
+                table_id=7,
+            ),
+        ]
+    )
+
 
 # ---------- ADD RESERVATION ---------- #
 MOCK_RESERVATION_IN = ReservationIn(
@@ -196,3 +217,46 @@ async def test_reservation_update_not_found():
     assert res.status == ReturnStatus.SUCCESS.value
     assert res.info == "0 record(s) updated"
 
+
+# ---------- BULK UPDATE RESERVATION ---------- #
+MOCK_RESERVATION_BULK_UPDATE_NOT_FOUND_IN = ReservationBulkUpdateIn(
+    reservations=[
+        ReservationUpdateIn(
+            reservation_id=99999,
+            customer_name="Non Existent Customer",
+            party_size=4,
+            reservation_time=datetime(2026, 11, 21, 21, 0),
+            table_id=8,
+        )
+    ]
+)
+
+
+@pytest.mark.asyncio
+async def test_reservation_bulk_update(mock_reservation_bulk_update_in):
+    assert len(bulk_created_reservation_id) == 2
+
+    res = await reservation_bulk_update(bulk_update_in=mock_reservation_bulk_update_in)
+
+    assert res.status == ReturnStatus.SUCCESS.value
+    assert res.info == "2 record(s) updated"
+
+    # Verify the updates using reservation_list
+    list_res = await reservation_list(search_query="Updated")
+    assert list_res.status == ReturnStatus.SUCCESS.value
+    # It should find 3 updated items:
+    # - Customer One Updated
+    # - Customer Two Updated
+    # - Customer Three Updated
+    assert list_res.count == 3
+
+
+@pytest.mark.asyncio
+async def test_reservation_bulk_update_not_found():
+    with pytest.raises(ResponseException) as exc_info:
+        await reservation_bulk_update(
+            bulk_update_in=MOCK_RESERVATION_BULK_UPDATE_NOT_FOUND_IN
+        )
+
+    assert exc_info.value.code == 500
+    assert exc_info.value.info == "Failed to bulk update reservation to the Database."
