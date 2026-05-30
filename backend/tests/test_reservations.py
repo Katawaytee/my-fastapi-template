@@ -4,6 +4,7 @@ import pytest
 from app.core.response import ResponseException, ReturnStatus
 from app.template.model.reservation import (
     ReservationBulkAddIn,
+    ReservationBulkDeleteIn,
     ReservationBulkUpdateIn,
     ReservationIn,
     ReservationUpdateIn,
@@ -11,6 +12,7 @@ from app.template.model.reservation import (
 from app.template.reservations import (
     reservation_add,
     reservation_bulk_add,
+    reservation_bulk_delete,
     reservation_bulk_update,
     reservation_delete,
     reservation_list,
@@ -38,6 +40,11 @@ def mock_reservation_bulk_update_in():
             ),
         ]
     )
+
+
+@pytest.fixture
+def mock_reservation_bulk_delete_in():
+    return ReservationBulkDeleteIn(reservation_ids=bulk_created_reservation_id)
 
 
 # ---------- ADD RESERVATION ---------- #
@@ -280,6 +287,37 @@ async def test_reservation_delete():
 @pytest.mark.asyncio
 async def test_reservation_delete_not_found():
     res = await reservation_delete(reservation_id=99999)
+
+    assert res.status == ReturnStatus.SUCCESS.value
+    assert res.info == "0 record(s) deleted"
+
+
+# ---------- BULK DELETE RESERVATION ---------- #
+MOCK_RESERVATION_BULK_DELETE_NOT_FOUND_IN = ReservationBulkDeleteIn(
+    reservation_ids=[99998, 99999]
+)
+
+
+@pytest.mark.asyncio
+async def test_reservation_bulk_delete(mock_reservation_bulk_delete_in):
+    assert len(bulk_created_reservation_id) == 2
+
+    res = await reservation_bulk_delete(bulk_delete_in=mock_reservation_bulk_delete_in)
+
+    assert res.status == ReturnStatus.SUCCESS.value
+    assert res.info == "2 record(s) deleted"
+
+    # Verify they are deleted
+    list_res = await reservation_list()
+    assert list_res.status == ReturnStatus.SUCCESS.value
+    assert list_res.count == 0
+
+
+@pytest.mark.asyncio
+async def test_reservation_bulk_delete_not_found():
+    res = await reservation_bulk_delete(
+        bulk_delete_in=MOCK_RESERVATION_BULK_DELETE_NOT_FOUND_IN
+    )
 
     assert res.status == ReturnStatus.SUCCESS.value
     assert res.info == "0 record(s) deleted"
